@@ -3,17 +3,23 @@
 <head>
   <meta charset="utf-8">
   
-  <title>hello</title>
+  <title>动态加载dex/jar文件过程分析 | hello</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="note something">
-<meta property="og:type" content="website">
-<meta property="og:title" content="hello">
-<meta property="og:url" content="http://atmzy.github.io/index.html">
+  <meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;Android系统中由dalvik虚拟机负责动态加载动作的执行，具体的源文件主要在源码目录中/libcore/dalvik/src/main/java/dalvik/system/路径下。
+1、dex文件载入过程&amp;#160; &amp;#160; &amp;#160; &amp;#160;先看最常用的动态加载dex文件的方法，首先创建一个DexClassLoader对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="动态加载dex/jar文件过程分析">
+<meta property="og:url" content="http://atmzy.github.io/2017/02/27/动态加载dex-jar文件过程分析/index.html">
 <meta property="og:site_name" content="hello">
-<meta property="og:description" content="note something">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;Android系统中由dalvik虚拟机负责动态加载动作的执行，具体的源文件主要在源码目录中/libcore/dalvik/src/main/java/dalvik/system/路径下。
+1、dex文件载入过程&amp;#160; &amp;#160; &amp;#160; &amp;#160;先看最常用的动态加载dex文件的方法，首先创建一个DexClassLoader对">
+<meta property="og:image" content="http://atmzy.github.io/C:\Users\yzhang\Pictures\ClassLoader整体关系图.jpg">
+<meta property="og:updated_time" content="2017-02-27T12:46:19.366Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="hello">
-<meta name="twitter:description" content="note something">
+<meta name="twitter:title" content="动态加载dex/jar文件过程分析">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;Android系统中由dalvik虚拟机负责动态加载动作的执行，具体的源文件主要在源码目录中/libcore/dalvik/src/main/java/dalvik/system/路径下。
+1、dex文件载入过程&amp;#160; &amp;#160; &amp;#160; &amp;#160;先看最常用的动态加载dex文件的方法，首先创建一个DexClassLoader对">
+<meta name="twitter:image" content="http://atmzy.github.io/C:\Users\yzhang\Pictures\ClassLoader整体关系图.jpg">
   
     <link rel="alternate" href="/atom.xml" title="hello" type="application/atom+xml">
   
@@ -66,9 +72,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-动态加载dex-jar文件过程分析" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-动态加载dex-jar文件过程分析" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2017/02/27/动态加载dex-jar文件过程分析/" class="article-date">
   <time datetime="2017-02-27T12:20:18.000Z" itemprop="datePublished">2017-02-27</time>
@@ -81,8 +85,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/02/27/动态加载dex-jar文件过程分析/">动态加载dex/jar文件过程分析</a>
+    <h1 class="article-title" itemprop="name">
+      动态加载dex/jar文件过程分析
     </h1>
   
 
@@ -133,147 +137,19 @@
     </footer>
   </div>
   
-</article>
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-APK安装过程中的签名校验" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2016/10/17/APK安装过程中的签名校验/" class="article-date">
-  <time datetime="2016-10-17T11:12:30.000Z" itemprop="datePublished">2016-10-17</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/10/17/APK安装过程中的签名校验/">APK安装过程中的签名校验</a>
-    </h1>
+    <a href="/2016/10/17/APK安装过程中的签名校验/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">APK安装过程中的签名校验</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="APK安装过程中的签名校验"><a href="#APK安装过程中的签名校验" class="headerlink" title="APK安装过程中的签名校验"></a>APK安装过程中的签名校验</h2><p>系统中所有已经安装的APK信息均保存在一个ArrayMap<string, packageparser.package=""> 之中：</string,></p>
-<p>源文件：/frameworks/base/services/core/java/com/android/server/pm/PackageManagerService.java</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">392    final ArrayMap&lt;String, PackageParser.Package&gt; mPackages =</div><div class="line">393            new ArrayMap&lt;String, PackageParser.Package&gt;();</div></pre></td></tr></table></figure>
-<p>在系统启动时会将所有APK信息导入mPackages:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">5278    private PackageParser.Package scanPackageDirtyLI(PackageParser.Package pkg, int parseFlags,</div><div class="line">5279            int scanFlags, long currentTime, UserHandle user) throws PackageManagerException &#123;</div><div class="line">                ...</div><div class="line">6060            // Add the new setting to mPackages</div><div class="line">6061            mPackages.put(pkg.applicationInfo.packageName, pkg);</div><div class="line">            &#125;</div></pre></td></tr></table></figure></p>
-<p>在安装APK时，如果发现现在正在安装的APK在系统中已经存在更早的版本，需要替换这个更早的版本，就会对这两个不同版本的APK的签名进行校验，查看是否相同：</p>
-<p>源文件：/frameworks/base/core/java/android/app/ApplicationPackageManager.java<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">443    @Override</div><div class="line">444    public int checkSignatures(String pkg1, String pkg2) &#123;</div><div class="line">445        try &#123;</div><div class="line">446            return mPM.checkSignatures(pkg1, pkg2);</div><div class="line">447        &#125; catch (RemoteException e) &#123;</div><div class="line">448            throw new RuntimeException(&quot;Package manager has died&quot;, e);</div><div class="line">449        &#125;</div><div class="line">450    &#125;</div></pre></td></tr></table></figure></p>
-<p>源文件：/frameworks/base/services/core/java/com/android/server/pm/PackageManagerService.java</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">2736    @Override</div><div class="line">2737    public int checkSignatures(String pkg1, String pkg2) &#123;</div><div class="line">2738        synchronized (mPackages) &#123;</div><div class="line">2739            final PackageParser.Package p1 = mPackages.get(pkg1);</div><div class="line">2740            final PackageParser.Package p2 = mPackages.get(pkg2);</div><div class="line">2741            if (p1 == null || p1.mExtras == null</div><div class="line">2742                    || p2 == null || p2.mExtras == null) &#123;</div><div class="line">2743                return PackageManager.SIGNATURE_UNKNOWN_PACKAGE;</div><div class="line">2744            &#125;</div><div class="line">2745            return compareSignatures(p1.mSignatures, p2.mSignatures);</div><div class="line">2746        &#125;</div><div class="line">2747    &#125;</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">2799    static int compareSignatures(Signature[] s1, Signature[] s2) &#123;</div><div class="line">2800        if (s1 == null) &#123;</div><div class="line">2801            return s2 == null</div><div class="line">2802                    ? PackageManager.SIGNATURE_NEITHER_SIGNED</div><div class="line">2803                    : PackageManager.SIGNATURE_FIRST_NOT_SIGNED;</div><div class="line">2804        &#125;</div><div class="line">2805</div><div class="line">2806        if (s2 == null) &#123;</div><div class="line">2807            return PackageManager.SIGNATURE_SECOND_NOT_SIGNED;</div><div class="line">2808        &#125;</div><div class="line">2809</div><div class="line">2810        if (s1.length != s2.length) &#123;</div><div class="line">2811            return PackageManager.SIGNATURE_NO_MATCH;</div><div class="line">2812        &#125;</div><div class="line">2813</div><div class="line">2814        // Since both signature sets are of size 1, we can compare without HashSets.</div><div class="line">2815        if (s1.length == 1) &#123;</div><div class="line">2816            return s1[0].equals(s2[0]) ?</div><div class="line">2817                    PackageManager.SIGNATURE_MATCH :</div><div class="line">2818                    PackageManager.SIGNATURE_NO_MATCH;</div><div class="line">2819        &#125;</div><div class="line">2820</div><div class="line">2821        ArraySet&lt;Signature&gt; set1 = new ArraySet&lt;Signature&gt;();</div><div class="line">2822        for (Signature sig : s1) &#123;</div><div class="line">2823            set1.add(sig);</div><div class="line">2824        &#125;</div><div class="line">2825        ArraySet&lt;Signature&gt; set2 = new ArraySet&lt;Signature&gt;();</div><div class="line">2826        for (Signature sig : s2) &#123;</div><div class="line">2827            set2.add(sig);</div><div class="line">2828        &#125;</div><div class="line">2829        // Make sure s2 contains all signatures in s1.</div><div class="line">2830        if (set1.equals(set2)) &#123;</div><div class="line">2831            return PackageManager.SIGNATURE_MATCH;</div><div class="line">2832        &#125;</div><div class="line">2833        return PackageManager.SIGNATURE_NO_MATCH;</div><div class="line">2834    &#125;</div></pre></td></tr></table></figure>
-<hr>
-<h2 id="获取系统中已安装APK的签名"><a href="#获取系统中已安装APK的签名" class="headerlink" title="获取系统中已安装APK的签名"></a>获取系统中已安装APK的签名</h2><pre><code>PackageManager x = getPackageManager();
-int i = x.checkSignatures(&quot;32&quot;, &quot;232&quot;);
-List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.GET_SIGNATURES);
-</code></pre><p>packageInfoList中每一项为一个已安装APK的相关信息，PackgeInfo类中就一项为signatures，即为该APK的签名信息</p>
-<h2 id="安装APK时签名信息生成过程"><a href="#安装APK时签名信息生成过程" class="headerlink" title="安装APK时签名信息生成过程"></a>安装APK时签名信息生成过程</h2><pre><code>待续。。。
-</code></pre>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2016/10/17/APK安装过程中的签名校验/" data-id="cizo3rb5a0000zcuon7aqp4hf" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
   
 </article>
-
-
-  
-    <article id="post-hello" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2016/10/17/hello/" class="article-date">
-  <time datetime="2016-10-17T11:00:53.000Z" itemprop="datePublished">2016-10-17</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/10/17/hello/">hello</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>摘要:<br>
-        
-          <p class="article-more-link">
-            <a href="/2016/10/17/hello/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2016/10/17/hello/" data-id="cizo3rb5i0003zcuoeihhz55z" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-hello-world" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2016/10/17/hello-world/" class="article-date">
-  <time datetime="2016-10-17T10:08:16.357Z" itemprop="datePublished">2016-10-17</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/10/17/hello-world/">Hello World</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2016/10/17/hello-world/" data-id="cizo3rb5e0001zcuo5mjqxgxw" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-  
 
 </section>
         
