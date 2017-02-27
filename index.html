@@ -68,6 +68,52 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-内核内存分配的两种方式" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/02/27/内核内存分配的两种方式/" class="article-date">
+  <time datetime="2017-02-27T13:28:51.000Z" itemprop="datePublished">2017-02-27</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/02/27/内核内存分配的两种方式/">内核内存分配的两种方式</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&#160; &#160; &#160; &#160;内核的低端内存（ZONE_DMA &amp; ZONE_NORMAL）使用的是线性映射方式，即将虚拟地址空间中从0xC0000000开始到ZONE_NORMAL区结束的部分都与物理地址空间中从0x00000000的内存一一对应。之所以需要有这么一段与物理地址一一对应的虚拟地址，是因为存在一些DMA或者其他硬件设备需要与内核内存进行交互，然而它们没有对应的MMU模块用来将虚拟地址转换为物理地址，所以要想让他们能够使用内核内存，就必须是内核程序与硬件设备对内存的访问顺序一致，因此存在这种线性映射的关系。具体来说，使用kmalloc()和<strong>get_free_pages()等相关函数申请的内存都是使用线性映射方式产生的内存空间，它们都是物理连续的。Kmalloc()是在slab内存分配器的基础上实现的，而</strong>get_free_pages()则是利用了buddy内存分配系统实现的。</p>
+<p>&#160; &#160; &#160; &#160;另一种是不连续分配，这部分与进程空间中的内存分配方式非常接近，虽然虚拟地址空间是连续的，但是物理地址并不一定是连续的，需要从GPT全局页表中开始一点点的查找到与某一个虚拟地址对应的物理地址。</p>
+<p>&#160; &#160; &#160; &#160;这两种方式申请的内存空间在内核程序执行过程中都都需要经过MMU来将虚拟地址转换为物理地址。所以就产生了一个问题，即它们的映射方式并不相同，MMU设备是如何分辨两种映射方式的。进一步的，对于每种映射方式都是如何进行地址转换的。</p>
+<p>&#160; &#160; &#160; &#160;对于后者的情况，也就是不连续分配的内存，MMU可以正常的按照各级也表进行查询。而对于连续分配的内存，情况猜测可能是这样的：虽然我们可以直接将虚拟地址减去PAGE_SIZE就得到其物理地址，但是实际中为了保证寻址过程的一致性，其实每个虚拟内存地址也都存在对应的页描述结构在页表中，而其中保存的内容既是其减去PAGE_SIZE后的物理地址，因此也可以通过MMU的逐级查询来进行转化。这样看来好像并不是一种最高效的寻址方法，但是一种为了满足需求的折中方法。</p>
+<p>&#160; &#160; &#160; &#160;另外一个问题就是关于线性映射空间的初始化问题，由于其中的虚拟地址已经规定好了其与物理地址的对应关系，所以就可以在系统初始化的时候将它们的页表及页描述符都设定好，这样再后来动态申请线性映射空间的内存是就不需要再进行页表初始化的工作，只需要返回合适的内存地址即可。所以在申请空间的时候可以节约一定的时间。</p>
+<p>Slab相关代码：<br>/include/linux/slab_def.h<br>头文件</p>
+<p>/mm/slab.c<br>__kmalloc</p>
+<p>Buddy相关代码：<br>/mm/page_alloc.c<br><strong>get_free_pages、get_page_from_freelist、</strong>alloc_pages_slowpath</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://atmzy.github.io/2017/02/27/内核内存分配的两种方式/" data-id="cizo55khu000320uo1x70tc0e" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Linux-kernel-内存分配/">Linux kernel, 内存分配</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-动态加载dex-jar文件过程分析" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2017/02/27/动态加载dex-jar文件过程分析/" class="article-date">
@@ -125,7 +171,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2017/02/27/动态加载dex-jar文件过程分析/" data-id="cizo4t4dn00015cuop4pdjh6x" class="article-share-link">Share</a>
+      <a data-url="http://atmzy.github.io/2017/02/27/动态加载dex-jar文件过程分析/" data-id="cizo55khv000420uo7goay6ta" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Android/">Android</a></li></ul>
@@ -178,7 +224,7 @@ List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2016/10/17/APK安装过程中的签名校验/" data-id="cizo4t4dj00005cuocp0zy3zd" class="article-share-link">Share</a>
+      <a data-url="http://atmzy.github.io/2016/10/17/APK安装过程中的签名校验/" data-id="cizo55kh5000020uol0lfntu4" class="article-share-link">Share</a>
       
       
     </footer>
@@ -219,7 +265,7 @@ List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2016/10/17/hello/" data-id="cizo4t4dv00045cuou7h9x24k" class="article-share-link">Share</a>
+      <a data-url="http://atmzy.github.io/2016/10/17/hello/" data-id="cizo55khs000220uoiunuo30u" class="article-share-link">Share</a>
       
       
     </footer>
@@ -264,7 +310,7 @@ List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://atmzy.github.io/2016/10/17/hello-world/" data-id="cizo4t4dq00025cuoz8n2dzax" class="article-share-link">Share</a>
+      <a data-url="http://atmzy.github.io/2016/10/17/hello-world/" data-id="cizo55khq000120uoezaovb22" class="article-share-link">Share</a>
       
       
     </footer>
@@ -286,7 +332,7 @@ List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Android/">Android</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Android/">Android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux-kernel-内存分配/">Linux kernel, 内存分配</a></li></ul>
     </div>
   </div>
 
@@ -296,7 +342,7 @@ List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Android/" style="font-size: 10px;">Android</a>
+      <a href="/tags/Android/" style="font-size: 10px;">Android</a> <a href="/tags/Linux-kernel-内存分配/" style="font-size: 10px;">Linux kernel, 内存分配</a>
     </div>
   </div>
 
@@ -316,6 +362,10 @@ List&lt;PackageInfo&gt; packageInfoList = x.getInstalledPackages(PackageManager.
     <h3 class="widget-title">最新文章</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2017/02/27/内核内存分配的两种方式/">内核内存分配的两种方式</a>
+          </li>
         
           <li>
             <a href="/2017/02/27/动态加载dex-jar文件过程分析/">动态加载dex/jar文件过程分析</a>

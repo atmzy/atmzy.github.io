@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>内核内存分配的两种方式 | hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;内核的低端内存（ZONE_DMA &amp;amp; ZONE_NORMAL）使用的是线性映射方式，即将虚拟地址空间中从0xC0000000开始到ZONE_NORMAL区结束的部分都与物理地址空间中从0x00000000的内存一一对应。之所以需要有这么一段与物理地址一一对应的虚拟地址，是因为存在一些DMA或者其他硬件设备需要与内核内存进行交互，然而它们">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内核内存分配的两种方式">
+<meta property="og:url" content="http://atmzy.github.io/2017/02/27/内核内存分配的两种方式/index.html">
+<meta property="og:site_name" content="hello">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;内核的低端内存（ZONE_DMA &amp;amp; ZONE_NORMAL）使用的是线性映射方式，即将虚拟地址空间中从0xC0000000开始到ZONE_NORMAL区结束的部分都与物理地址空间中从0x00000000的内存一一对应。之所以需要有这么一段与物理地址一一对应的虚拟地址，是因为存在一些DMA或者其他硬件设备需要与内核内存进行交互，然而它们">
+<meta property="og:updated_time" content="2017-02-27T13:29:29.009Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="内核内存分配的两种方式">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;内核的低端内存（ZONE_DMA &amp;amp; ZONE_NORMAL）使用的是线性映射方式，即将虚拟地址空间中从0xC0000000开始到ZONE_NORMAL区结束的部分都与物理地址空间中从0x00000000的内存一一对应。之所以需要有这么一段与物理地址一一对应的虚拟地址，是因为存在一些DMA或者其他硬件设备需要与内核内存进行交互，然而它们">
+  
+    <link rel="alternate" href="/atom.xml" title="hello" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">hello</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">world</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://atmzy.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-内核内存分配的两种方式" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/02/27/内核内存分配的两种方式/" class="article-date">
+  <time datetime="2017-02-27T13:28:51.000Z" itemprop="datePublished">2017-02-27</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      内核内存分配的两种方式
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>&#160; &#160; &#160; &#160;内核的低端内存（ZONE_DMA &amp; ZONE_NORMAL）使用的是线性映射方式，即将虚拟地址空间中从0xC0000000开始到ZONE_NORMAL区结束的部分都与物理地址空间中从0x00000000的内存一一对应。之所以需要有这么一段与物理地址一一对应的虚拟地址，是因为存在一些DMA或者其他硬件设备需要与内核内存进行交互，然而它们没有对应的MMU模块用来将虚拟地址转换为物理地址，所以要想让他们能够使用内核内存，就必须是内核程序与硬件设备对内存的访问顺序一致，因此存在这种线性映射的关系。具体来说，使用kmalloc()和<strong>get_free_pages()等相关函数申请的内存都是使用线性映射方式产生的内存空间，它们都是物理连续的。Kmalloc()是在slab内存分配器的基础上实现的，而</strong>get_free_pages()则是利用了buddy内存分配系统实现的。</p>
+<p>&#160; &#160; &#160; &#160;另一种是不连续分配，这部分与进程空间中的内存分配方式非常接近，虽然虚拟地址空间是连续的，但是物理地址并不一定是连续的，需要从GPT全局页表中开始一点点的查找到与某一个虚拟地址对应的物理地址。</p>
+<p>&#160; &#160; &#160; &#160;这两种方式申请的内存空间在内核程序执行过程中都都需要经过MMU来将虚拟地址转换为物理地址。所以就产生了一个问题，即它们的映射方式并不相同，MMU设备是如何分辨两种映射方式的。进一步的，对于每种映射方式都是如何进行地址转换的。</p>
+<p>&#160; &#160; &#160; &#160;对于后者的情况，也就是不连续分配的内存，MMU可以正常的按照各级也表进行查询。而对于连续分配的内存，情况猜测可能是这样的：虽然我们可以直接将虚拟地址减去PAGE_SIZE就得到其物理地址，但是实际中为了保证寻址过程的一致性，其实每个虚拟内存地址也都存在对应的页描述结构在页表中，而其中保存的内容既是其减去PAGE_SIZE后的物理地址，因此也可以通过MMU的逐级查询来进行转化。这样看来好像并不是一种最高效的寻址方法，但是一种为了满足需求的折中方法。</p>
+<p>&#160; &#160; &#160; &#160;另外一个问题就是关于线性映射空间的初始化问题，由于其中的虚拟地址已经规定好了其与物理地址的对应关系，所以就可以在系统初始化的时候将它们的页表及页描述符都设定好，这样再后来动态申请线性映射空间的内存是就不需要再进行页表初始化的工作，只需要返回合适的内存地址即可。所以在申请空间的时候可以节约一定的时间。</p>
+<p>Slab相关代码：<br>/include/linux/slab_def.h<br>头文件</p>
+<p>/mm/slab.c<br>__kmalloc</p>
+<p>Buddy相关代码：<br>/mm/page_alloc.c<br><strong>get_free_pages、get_page_from_freelist、</strong>alloc_pages_slowpath</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://atmzy.github.io/2017/02/27/内核内存分配的两种方式/" data-id="cizo55khu000320uo1x70tc0e" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Linux-kernel-内存分配/">Linux kernel, 内存分配</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2017/02/27/动态加载dex-jar文件过程分析/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">动态加载dex/jar文件过程分析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Android/">Android</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux-kernel-内存分配/">Linux kernel, 内存分配</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Android/" style="font-size: 10px;">Android</a> <a href="/tags/Linux-kernel-内存分配/" style="font-size: 10px;">Linux kernel, 内存分配</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/02/27/内核内存分配的两种方式/">内核内存分配的两种方式</a>
+          </li>
+        
+          <li>
+            <a href="/2017/02/27/动态加载dex-jar文件过程分析/">动态加载dex/jar文件过程分析</a>
+          </li>
+        
+          <li>
+            <a href="/2016/10/17/APK安装过程中的签名校验/">APK安装过程中的签名校验</a>
+          </li>
+        
+          <li>
+            <a href="/2016/10/17/hello/">hello</a>
+          </li>
+        
+          <li>
+            <a href="/2016/10/17/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 atmzy<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
